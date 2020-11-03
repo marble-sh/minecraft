@@ -1,0 +1,54 @@
+name: Docker
+
+on:
+  create:
+  release:
+    types: [ created, published ]
+  push:
+    tags: [ v* ]
+
+env:
+  IMAGE_NAME: minecraft
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.ref_type == 'tag'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Environment
+        id: docker-env
+        run: |
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          IMAGE_ID=${{ github.repository }}
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          echo "IMAGE_ID=$IMAGE_ID" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Log into registry
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag ${{ github.repository }}:latest --tag ${{ github.repository }}:$VERSION --build-arg version=$VERSION
+
+      - name: Push image
+        run: docker push $IMAGE_ID:$VERSION
+
+      - name: Push latest image
+        run: docker push $IMAGE_ID:latest
+
+      - name: Logout of registry
+        run: docker logout
