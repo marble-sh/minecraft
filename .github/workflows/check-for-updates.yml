@@ -1,0 +1,71 @@
+name: Check and Tag New Minecraft Versions
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Download Metadata
+        run: curl -sL 'https://launchermeta.mojang.com/mc/game/version_manifest.json' -o manifest.json
+
+      - name: Parse JSON
+        id: json
+        run: |
+          content=`cat manifest.json`
+          echo "::set-output name=data::$content"
+
+      - name: Find Versions
+        id: data
+        run: |
+          echo "::set-output name=release_tag::v${{ fromJson(steps.json.outputs.data).latest.release }}"
+          echo "::set-output name=snapshot_tag::v${{ fromJson(steps.json.outputs.data).latest.snapshot }}"
+
+      - name: Check if release tag exists
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: check_release_tag
+        with:
+          tag: ${{ steps.data.outputs.release_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if snapshot tag exists
+        uses: mukunku/tag-exists-action@v1.0.0
+        id: check_snapshot_tag
+        with:
+          tag: ${{ steps.data.outputs.snapshot_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag New Release Version
+        if: ${{ steps.check_release_tag.outputs.exists == 'false' }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        with:
+          tag_name: ${{ steps.data.outputs.release_tag }}
+          release_name: ${{ steps.data.outputs.release_tag }}
+          draft: false
+          prerelease: false
+          body: |
+            https://hub.docker.com/repository/docker/marblenix/minecraft
+
+      - name: Tag New Shapshot Version
+        if: ${{ steps.check_snapshot_tag.outputs.exists == 'false' && steps.data.outputs.snapshot_tag != steps.data.outputs.release_tag }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
+        with:
+          tag_name: ${{ steps.data.outputs.snapshot_tag }}
+          release_name: ${{ steps.data.outputs.snapshot_tag }}
+          draft: false
+          prerelease: true
+          body: |
+            https://hub.docker.com/repository/docker/marblenix/minecraft
