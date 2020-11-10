@@ -1,17 +1,16 @@
 name: Docker
 
 on:
-  create:
   release:
-    types: [ created, published ]
-  push:
-    tags: [ v* ]
+    types:
+      - prereleased
+      - released
 
 env:
   IMAGE_NAME: minecraft
 
 jobs:
-  build:
+  docker:
     runs-on: ubuntu-latest
     if: github.event.ref_type == 'tag'
 
@@ -41,13 +40,33 @@ jobs:
       - name: Log into registry
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin
 
-      - name: Build image
-        run: docker build . --file Dockerfile --tag ${{ github.repository }}:latest --tag ${{ github.repository }}:$VERSION --build-arg version=$VERSION
+      - name: Build prerelease
+        if: github.event.action == 'prereleased'
+        run: >
+          docker build .
+          --file Dockerfile
+          --tag ${{ github.repository }}:latest
+          --tag ${{ github.repository }}:$VERSION
+          --build-arg version=$VERSION
+
+      - name: Build stable
+        if: github.event.action == 'released'
+        run: >
+          docker build .
+          --tag ${{ github.repository }}:latest
+          --tag ${{ github.repository }}:stable
+          --tag ${{ github.repository }}:$VERSION
+          --file Dockerfile
+          --build-arg version=$VERSION
 
       - name: Push image
         run: docker push $IMAGE_ID:$VERSION
 
       - name: Push latest image
+        run: docker push $IMAGE_ID:latest
+
+      - name: Push stable image
+        if: github.event.action == 'released'
         run: docker push $IMAGE_ID:latest
 
       - name: Logout of registry
