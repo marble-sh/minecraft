@@ -2,7 +2,7 @@ name: Check and Tag New Minecraft Versions
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0,30 * * * *'
 
 jobs:
   run:
@@ -55,7 +55,7 @@ jobs:
           draft: false
           prerelease: false
           body: |
-            https://hub.docker.com/repository/docker/marblenix/minecraft
+            https://hub.docker.com/r/marblenix/minecraft
 
       - name: Tag New Shapshot Version
         if: ${{ steps.check_snapshot_tag.outputs.exists == 'false' && steps.data.outputs.snapshot_tag != steps.data.outputs.release_tag }}
@@ -68,4 +68,4 @@ jobs:
           draft: false
           prerelease: true
           body: |
-            https://hub.docker.com/repository/docker/marblenix/minecraft
+            https://hub.docker.com/r/marblenix/minecraft
