@@ -20,8 +20,8 @@ Minecraft -> Multiplayer -> Direct Connection -> Server Address: localhost -> Jo
 
 | tag | meaning | current |
 |-----|---------|---------|
-| latest | follow all releases, including pre-releases and stable releases | ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/marblenix/minecraft?color=%23fff&include_prereleases&label=%20&style=flat-square) |
-| stable | follow the latest stable release | ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/marblenix/minecraft?color=%23fff&label=%20&style=flat-square) |
+| latest | follow all releases, including pre-releases and stable releases | <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/marblenix/minecraft?color=rgba%28255%2C255%2C255%2C0%29&include_prereleases&label=%20&style=flat-square"> |
+| stable | follow the latest stable release | <img alt="GitHub release (latest by date excluding pre-releases)" src="https://img.shields.io/github/v/release/marblenix/minecraft?color=rgba%28255%2C255%2C255%2C0%29&label=%20&style=flat-square"> |
 
 ### Stopping a running server
 
