@@ -4,19 +4,24 @@
 
 ## Quickstart
 
-```shell
+#### MacOS/Linux:
+```
 docker run -it --name minecraft -p 25565:25565 --rm -v "$HOME/minecraft":/data marblenix/minecraft:stable
+```
+
+#### Windows:
+```
+docker run -it --name minecraft -p 25565:25565 -v C:/minecraft:/data --rm marblenix/minecraft:stable
 ```
 
 Minecraft -> Multiplayer -> Direct Connection -> Server Address: localhost -> Join Server
 
 ## Tags
 
-| tag | meaning | example |
+| tag | meaning | current |
 |-----|---------|---------|
-| latest | follow the latest published release, be that a stable release or a snapshot | v20w46a |
-| stable | follow the latest stable release | v1.16.4 |
-| versioned | will never change after publish | will always be  v20w45a |
+| latest | follow all releases, including pre-releases and stable releases | ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/marblenix/minecraft?color=%23fff&include_prereleases&label=%20&style=flat-square) |
+| stable | follow the latest stable release | ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/marblenix/minecraft?color=%23fff&label=%20&style=flat-square) |
 
 ### Stopping a running server
 
