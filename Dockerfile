@@ -6,7 +6,7 @@ RUN apk add curl ca-certificates
 RUN curl -sL "${utility}" -o /minecraft_downloader
 RUN chmod +x /minecraft_downloader
 
-FROM openjdk:16.0-slim
+FROM openjdk:17.0-slim
 MAINTAINER Cassidy Marble
 ARG version=latest
 ARG type=release
