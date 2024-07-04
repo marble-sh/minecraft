@@ -1,21 +1,39 @@
-FROM alpine:3 as stage1
-ARG utility=https://github.com/marblenix/minecraft_downloader/releases/download/latest/minecraft_downloader_linux
+FROM alpine:latest as fetch
+ARG manifest=https://launchermeta.mojang.com/mc/game/version_manifest.json
 
-RUN apk update
-RUN apk add curl ca-certificates
-RUN curl -sL "${utility}" -o /minecraft_downloader
-RUN chmod +x /minecraft_downloader
+RUN apk add --no-cache curl ca-certificates jq openjdk21-jdk openjdk21-jmods openjdk21-static-libs binutils
 
-FROM openjdk:17.0-slim
-MAINTAINER Cassidy Marble
-ARG version=latest
-ARG type=release
+RUN curl -fsSL "${manifest}" -o manifest.json
+RUN jq -r '.latest.release' manifest.json | tee release_version
+RUN curl -fsSL "$(jq -r '.versions[] | select(.id=="'"$(cat release_version)"'") | .url' manifest.json)" -o release_manifest.json
+RUN jq -r '.downloads.server | "\(.sha1) \("server.jar")"' release_manifest.json | tee server.jar.shasum
+RUN curl -fsSL "$(jq -r '.downloads.server.url' release_manifest.json)" -o server.jar
+RUN sha1sum -c server.jar.shasum
+
+# build minimal JRE
+RUN jlink \
+    --verbose \
+    --add-modules ALL-MODULE-PATH \
+    --compress zip-9 --strip-debug --no-header-files --no-man-pages \
+    --output /opt/java
+
+FROM alpine:latest
+
+COPY --from=fetch server.jar server.jar
+COPY --from=fetch /opt/java /opt/java
+
+ENV PATH="$PATH:/opt/java/bin"
+
+RUN addgroup -S minecraft && adduser -D -H -S minecraft -G minecraft && \
+    mkdir /data && \
+    echo eula=true > /data/eula.txt && \
+    chown minecraft:minecraft /data
 
 WORKDIR /data
 VOLUME /data
 
+# USER minecraft
+
 EXPOSE 25565
 
-COPY --from=stage1 /minecraft_downloader /minecraft_downloader
-RUN /minecraft_downloader --version=$version --type=$type --output /minecraft.jar
-CMD echo eula=true > /data/eula.txt && java -jar /minecraft.jar
+ENTRYPOINT ["java", "-jar", "/server.jar"]
